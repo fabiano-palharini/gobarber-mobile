@@ -13,6 +13,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import api from '../../services/api';
 import getValidationErrors from '../../utils/getValidationErrors';
 import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
 import Button from '../../components/Button';
@@ -45,11 +46,11 @@ const SignUp: React.FC = () => {
 
       await schema.validate(data, { abortEarly: false });
 
-      // await api.post('/users', data);
-
-      // history.push('/');
+      await api.post('/users', data);
 
       Alert.alert('User saved !', 'You can access GoBarber now !!!');
+
+      navigation.goBack();
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const errors = getValidationErrors(err);
@@ -115,7 +116,7 @@ const SignUp: React.FC = () => {
                 onSubmitEditing={() => formRef.current.submitForm()}
               />
               <Button onPress={() => formRef.current.submitForm()}>
-                Sign in
+                Sign up
               </Button>
             </Form>
           </Container>
