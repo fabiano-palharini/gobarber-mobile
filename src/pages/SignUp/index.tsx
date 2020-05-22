@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
+import * as Yup from 'yup';
 import {
   Image,
   KeyboardAvoidingView,
@@ -10,17 +11,58 @@ import {
   View,
   ScrollView,
   TextInput,
+  Alert,
 } from 'react-native';
+import getValidationErrors from '../../utils/getValidationErrors';
 import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import logoImg from '../../assets/logo.png';
+
+interface SignUpFormData {
+  name: string;
+  email: string;
+  password: string;
+}
 
 const SignUp: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const navigation = useNavigation();
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
+
+  const handleSignUp = useCallback(async (data: SignUpFormData) => {
+    try {
+      formRef.current?.setErrors({});
+
+      const schema = Yup.object().shape({
+        name: Yup.string().required('Name is mandatory'),
+        email: Yup.string()
+          .required('E-mail is mandatory')
+          .email('Please inform a valid email'),
+        password: Yup.string().min(6, 'At least 6 chars'),
+      });
+
+      await schema.validate(data, { abortEarly: false });
+
+      // await api.post('/users', data);
+
+      // history.push('/');
+
+      Alert.alert('User saved !', 'You can access GoBarber now !!!');
+    } catch (err) {
+      if (err instanceof Yup.ValidationError) {
+        const errors = getValidationErrors(err);
+        formRef.current?.setErrors(errors);
+        return;
+      }
+
+      Alert.alert(
+        'Error when saving the information',
+        'An error happened when saving your information. Please check it and try again.',
+      );
+    }
+  }, []);
 
   return (
     <>
@@ -38,15 +80,10 @@ const SignUp: React.FC = () => {
             <View>
               <Title>Create your account</Title>
             </View>
-            <Form
-              ref={formRef}
-              onSubmit={data => {
-                console.log(data);
-              }}
-            >
+            <Form ref={formRef} onSubmit={handleSignUp}>
               <Input
                 autoCapitalize="words"
-                name="Name"
+                name="name"
                 icon="user"
                 placeholder="Name"
                 returnKeyType="next"
