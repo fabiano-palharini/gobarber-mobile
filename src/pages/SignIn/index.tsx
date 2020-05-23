@@ -4,7 +4,6 @@ import Icon from 'react-native-vector-icons/Feather';
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
-
 import {
   Image,
   KeyboardAvoidingView,
@@ -14,6 +13,8 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { useAuth } from '../../hooks/auth';
+
 import getValidationErrors from '../../utils/getValidationErrors';
 import {
   Container,
@@ -36,36 +37,42 @@ const SignIn: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const navigation = useNavigation();
+  const { signIn, user } = useAuth();
 
-  const handleSignIn = useCallback(async (data: SignInFormData) => {
-    try {
-      formRef.current?.setErrors({});
+  console.log(user);
 
-      const schema = Yup.object().shape({
-        email: Yup.string()
-          .required('E-mail is mandatory')
-          .email('Please inform a valid email'),
-        password: Yup.string().min(6, 'Password is mandatory'),
-      });
+  const handleSignIn = useCallback(
+    async (data: SignInFormData) => {
+      try {
+        formRef.current?.setErrors({});
 
-      await schema.validate(data, { abortEarly: false });
+        const schema = Yup.object().shape({
+          email: Yup.string()
+            .required('E-mail is mandatory')
+            .email('Please inform a valid email'),
+          password: Yup.string().min(6, 'Password is mandatory'),
+        });
 
-      // await signIn({ email: data.email, password: data.password });
+        await schema.validate(data, { abortEarly: false });
 
-      // history.push('/dashboard');
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErrors(err);
-        formRef.current?.setErrors(errors);
-        return;
+        await signIn({ email: data.email, password: data.password });
+
+        // history.push('/dashboard');
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
+          formRef.current?.setErrors(errors);
+          return;
+        }
+
+        Alert.alert(
+          'Authentication error',
+          'An error happened during authentication. Please check your credentials',
+        );
       }
-
-      Alert.alert(
-        'Authentication error',
-        'An error happened during authentication. Please check your credentials',
-      );
-    }
-  }, []);
+    },
+    [signIn],
+  );
 
   return (
     <>
